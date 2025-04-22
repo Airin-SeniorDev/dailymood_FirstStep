@@ -1,53 +1,37 @@
-import { useEffect, useState } from 'react'
+// ✅ pages/api/recommend.ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+
+type Song = {
+  title: string
+  url: string
+}
 
 type Recommendation = {
   mood: string
   quote: string
-  song: string
+  songs: Song[]
 }
 
 const moodMap: Record<string, Recommendation> = {
   happy: {
     mood: '😄 มีความสุข',
-    quote: '"จงมีความสุขกับสิ่งที่มี และทำสิ่งที่ดีที่สุดกับสิ่งที่ขาดไป"',
-    song: 'Happy – Pharrell Williams',
+    quote: 'จงมีความสุขกับสิ่งที่มี และทำสิ่งที่ดีที่สุดกับสิ่งที่ขาดไป',
+    songs: [
+      { title: 'Billie Eilish - BIRDS OF A FEATHER ', url: 'https://youtu.be/V9PVRfjEBTI?si=Qk099iiIZaL4dnJR' },
+      { title: 'Billie Eilish - Happier Than Ever ', url: 'https://youtu.be/5GJWxDKyk3A?si=DlXToeSkVC20uuqW' },
+      { title: 'Post Malone, Swae Lee - Sunflower', url: 'https://youtu.be/ApXoWvfEYVU?si=OKyYsM3OuGoOpBl1' },
+    ],
   },
-  sad: {
-    mood: '😢 เศร้า',
-    quote: '"แม้จะเหนื่อยล้า แต่อย่ายอมแพ้"',
-    song: 'Someone Like You – Adele',
-  },
-  angry: {
-    mood: '😠 โกรธ',
-    quote: '"หายใจลึก ๆ แล้วปล่อยวาง"',
-    song: 'Lose Yourself – Eminem',
-  },
-  stressed: {
-    mood: '😰 เครียด',
-    quote: '"พักก่อน แล้วค่อยไปต่อ"',
-    song: 'Weightless – Marconi Union',
-  },
-  tired: {
-    mood: '😴 เหนื่อยล้า',
-    quote: '"การพักผ่อนก็เป็นส่วนหนึ่งของความสำเร็จ"',
-    song: 'Let Her Go – Passenger',
-  },
-  calm: {
-    mood: '😌 สงบ',
-    quote: '"ความสงบคือพลังที่ยิ่งใหญ่ที่สุด"',
-    song: 'Bloom – The Paper Kites',
-  },
+  // ... (เพิ่ม mood อื่น ๆ เหมือนหน้า UI)
 }
 
-export default function RecommendPage() {
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const mood = req.query.mood as string
 
-  useEffect(() => {
-    const mood = localStorage.getItem('todayMood')
-    if (mood && moodMap[mood]) {
-      setRecommendation(moodMap[mood])
-    }
-  }, [])
+  if (!mood || !moodMap[mood]) {
+    return res.status(400).json({ error: 'Invalid or missing mood' })
+  }
 
- 
+  const recommendation = moodMap[mood]
+  return res.status(200).json(recommendation)
 }
