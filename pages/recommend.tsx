@@ -1,45 +1,72 @@
-// ✅ pages/recommend.tsx – ดึงอารมณ์ล่าสุดจาก Firestore
+'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+
+type Song = {
+  title: string
+  url: string
+}
 
 type Recommendation = {
   mood: string
   quote: string
-  song: string
+  songs: Song[]
 }
 
 const moodMap: Record<string, Recommendation> = {
   happy: {
     mood: '😄 มีความสุข',
-    quote: '"จงมีความสุขกับสิ่งที่มี และทำสิ่งที่ดีที่สุดกับสิ่งที่ขาดไป"',
-    song: 'Happy – Pharrell Williams',
+    quote: 'จงมีความสุขกับสิ่งที่มี และทำสิ่งที่ดีที่สุดกับสิ่งที่ขาดไป',
+    songs: [
+      { title: 'Billie Eilish - BIRDS OF A FEATHER ', url: 'https://youtu.be/V9PVRfjEBTI?si=Qk099iiIZaL4dnJR' },
+      { title: 'Billie Eilish - Happier Than Ever ', url: 'https://youtu.be/5GJWxDKyk3A?si=DlXToeSkVC20uuqW' },
+      { title: 'Post Malone, Swae Lee - Sunflower', url: 'https://youtu.be/ApXoWvfEYVU?si=OKyYsM3OuGoOpBl1' },
+    ],
   },
   sad: {
     mood: '😢 เศร้า',
-    quote: '"แม้จะเหนื่อยล้า แต่อย่ายอมแพ้"',
-    song: 'Someone Like You – Adele',
+    quote: 'แม้ความเงียบ ดังกว่าคำพูดเป็นพันคำ',
+    songs: [
+      { title: 'Part Time Musicians- Message In A Bottle', url: 'https://youtu.be/ZTwd7kekzTs?si=GVHzNx5Qegs556dz' },
+      { title: 'Miki Matsubara - Stay With Me ', url: 'https://youtu.be/moR4uw-NWLY?si=6wGWKQAPUJK_JM7R' },
+      { title: 'Happier- Marshmello ft.Bastille', url: 'https://youtu.be/m7Bc3pLyij0?si=L457pGfXU-qEDrR0' },
+    ],
   },
   angry: {
     mood: '😠 โกรธ',
-    quote: '"หายใจลึก ๆ แล้วปล่อยวาง"',
-    song: 'Lose Yourself – Eminem',
+    quote: 'หายใจลึก ๆ แล้วปล่อยวาง',
+    songs: [
+      { title: 'ทนได้ทุกที- TaitosmitH', url: 'https://youtu.be/Z6PQtPL0I6A?si=HKXMan-FdOpeHS0P' },
+      { title: 'ไม่มีเธอ - Retrospect ', url: 'https://youtu.be/BYOFWdOHpjI?si=tllkl_gQQdILRLS2' },
+      { title: 'โง่ : Silly Fools', url: 'https://youtu.be/6d1xoV_cyf4?si=Ri249-VeNDfc88j5' },
+    ],
   },
   stressed: {
     mood: '😰 เครียด',
-    quote: '"พักก่อน แล้วค่อยไปต่อ"',
-    song: 'Weightless – Marconi Union',
+    quote: 'พักก่อน แล้วค่อยไปต่อ',
+    songs: [
+      { title: 'Hello Mama - TaitosmitH', url: 'https://youtu.be/uefcQzHmA_Y?si=ZTUzregnc9ffQDWd' },
+      { title: 'ถ้าเราเจอกันอีก-Tilly Birds ', url: 'https://youtu.be/_ivYh1FakjE?si=xxGeFby_j7dvoUdM' },
+      { title: 'ระหว่างที่รอเขา - ป๊อบ ปองกูล Feat. ธีร์ ไชยเดช', url: 'https://youtu.be/P1g99XOn5VY?si=fuJxVENxOQl7Ez40' },
+    ],
   },
   tired: {
     mood: '😴 เหนื่อยล้า',
-    quote: '"การพักผ่อนก็เป็นส่วนหนึ่งของความสำเร็จ"',
-    song: 'Let Her Go – Passenger',
+    quote: 'การพักผ่อนก็เป็นส่วนหนึ่งของความสำเร็จ',
+    songs: [
+      { title: 'Greasy Cafe - ความหมายของการมีลมหายใจ', url: 'https://youtu.be/u233DxkQtwc?si=BmJHDs8dPJfJ3V1b' },
+      { title: 'โลกที่แบกไว้-มนัสวีร์', url: 'https://youtu.be/RiZ2N3A5siI?si=Ft06zU5MklxzSmfI' },
+      { title: 'Slot  Machine - จันทร์เจ้า', url: 'https://youtu.be/CMbYwYYFI3Y?si=n81weJV4J7bnucWN' },
+    ],
   },
   calm: {
     mood: '😌 สงบ',
-    quote: '"ความสงบคือพลังที่ยิ่งใหญ่ที่สุด"',
-    song: 'Bloom – The Paper Kites',
+    quote: 'ความสงบคือพลังที่ยิ่งใหญ่ที่สุด',
+    songs: [
+      { title: 'JVKE - golden hour ', url: 'https://youtu.be/PEM0Vs8jf1w?si=MdMmLlpe2okdiKvl' },
+      { title: 'Lady Gaga, Bruno Mars - Die With A Smile', url: 'https://youtu.be/kPa7bsKwL-c?si=HxpYch5N57d23LIS' },
+      { title: 'Fujii Kaze - Michi Teyu Ku', url: 'https://youtu.be/ptiK8U4WlSc?si=gbjWxVKDFq7yN74Z' },
+    ],
   },
 }
 
@@ -55,34 +82,51 @@ const tipsByMood: Record<string, string> = {
 export default function RecommendPage() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
   const [tip, setTip] = useState<string | null>(null)
+  const [randomSong, setRandomSong] = useState<Song | null>(null)
+
+  const pickRandomSong = (songs: Song[]) => {
+    return songs[Math.floor(Math.random() * songs.length)]
+  }
 
   useEffect(() => {
-    const fetchLatestMood = async () => {
-      const moodsRef = collection(db, 'moods')
-      const q = query(moodsRef, orderBy('createdAt', 'desc'), limit(1))
-      const snapshot = await getDocs(q)
-      if (!snapshot.empty) {
-        const latest = snapshot.docs[0].data()
-        const mood = latest.mood
-        if (moodMap[mood]) {
-          setRecommendation(moodMap[mood])
-          setTip(tipsByMood[mood])
-        }
-      }
+    const mood = localStorage.getItem('todayMood')
+    if (mood && moodMap[mood]) {
+      const moodData = moodMap[mood]
+      setRecommendation(moodData)
+      setTip(tipsByMood[mood] || null)
+      setRandomSong(pickRandomSong(moodData.songs))
     }
-
-    fetchLatestMood()
   }, [])
+
+  const shuffleSong = () => {
+    if (recommendation) {
+      setRandomSong(pickRandomSong(recommendation.songs))
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100 p-6 text-center">
-      <h1 className="text-3xl font-bold mb-6 text-purple-700">🎧 คำแนะนำวันนี้</h1>
+      <h1 className="text-3xl font-bold mb-4 text-purple-700">🎧 คำแนะนำวันนี้</h1>
 
       {recommendation ? (
         <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
           <p className="text-4xl mb-4">{recommendation.mood}</p>
           <p className="text-base mb-2">💬 <i>{recommendation.quote}</i></p>
-          <p className="text-base mb-4">🎵 <b>{recommendation.song}</b></p>
+
+          {randomSong && (
+            <p className="text-base mb-4">
+              🎵 <a href={randomSong.url} target="_blank" className="text-blue-600 underline hover:text-blue-800">
+                {randomSong.title}
+              </a>
+            </p>
+          )}
+
+          <button
+            onClick={shuffleSong}
+            className="mb-4 px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500"
+          >
+            🎲 สุ่มเพลงอื่น
+          </button>
 
           {tip && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-left">
@@ -92,7 +136,7 @@ export default function RecommendPage() {
           )}
         </div>
       ) : (
-        <p className="text-red-500 mt-6">⚠️ ไม่พบข้อมูลอารมณ์ล่าสุด กรุณาลองใหม่อีกครั้ง</p>
+        <p className="text-red-500 mt-6">⚠️ กรุณาเลือกอารมณ์ที่หน้า /mood ก่อน</p>
       )}
 
       <Link href="/mood">
