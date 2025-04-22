@@ -9,6 +9,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  Timestamp,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import {
@@ -26,7 +27,7 @@ type MoodRecord = {
   id: string
   mood: string
   comment: string
-  createdAt: any
+  createdAt: Timestamp
 }
 
 type Feedback = {
@@ -126,10 +127,10 @@ export default function HistoryPage() {
         </ResponsiveContainer>
       </div>
 
-      {history.map((item, index) => (
+      {history.map((item) => (
         <div key={item.id} className="bg-white p-4 rounded shadow mb-4 border">
           <p className="text-sm text-gray-500">
-            📅 {item.createdAt?.toDate?.().toISOString().split('T')[0]} — {moodLabels[item.mood] || item.mood}
+            📅 {item.createdAt?.toDate().toISOString().split('T')[0]} — {moodLabels[item.mood] || item.mood}
           </p>
           <p className="mt-1 text-green-600 italic">💬 {item.comment || 'ไม่มีคำอธิบาย'}</p>
 
